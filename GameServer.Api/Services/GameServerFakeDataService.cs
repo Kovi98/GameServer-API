@@ -165,8 +165,8 @@ public sealed class GameServerFakeDataService : IGameServerFakeDataService
     private static Guid CreateDeterministicGuid(string value)
     {
         var normalized = value.Trim().ToLowerInvariant();
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(normalized));
-        return new Guid(hash);
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+        return new Guid(hash[..16]);
     }
 
     private sealed record SeedPlayer(Guid Id, string Nickname, int Level, bool IsBanned);
