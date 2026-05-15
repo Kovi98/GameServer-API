@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/P3K.GameServer.Api/P3K.GameServer.Api.csproj" />
+  </Folder>
+</Solution>
