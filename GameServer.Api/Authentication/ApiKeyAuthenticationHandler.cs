@@ -38,15 +38,33 @@ public sealed class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAu
         }
 
         var isValid = string.Equals(providedApiKey, expectedApiKey, StringComparison.Ordinal);
+        if (!isValid)
+        {
+            return Task.FromResult(AuthenticateResult.Fail("Invalid API key."));
+        }
+
         var claims = new[]
         {
-            new Claim(ApiKeyValidClaimType, isValid.ToString())
+            new Claim(ApiKeyValidClaimType, bool.TrueString)
         };
-
         var identity = new ClaimsIdentity(claims, SchemeName);
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, SchemeName);
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = Request.Headers.ContainsKey(HeaderName)
+            ? StatusCodes.Status403Forbidden
+            : StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    }
+
+    protected override Task HandleForbiddenAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
     }
 }

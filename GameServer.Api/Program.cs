@@ -33,7 +33,6 @@ builder.Services.AddAuthorizationBuilder()
     {
         policy.AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName);
         policy.RequireAuthenticatedUser();
-        policy.RequireClaim(ApiKeyAuthenticationHandler.ApiKeyValidClaimType, bool.TrueString);
     });
 
 builder.Services.AddOpenApi();
