@@ -31,19 +31,19 @@ dotnet run
 
 Open:
 
-- OpenAPI JSON: `http://localhost:5026/openapi/v1.json`
-- Scalar UI: `http://localhost:5026/scalar/v1`
+- OpenAPI JSON: `http://localhost:5051/openapi/v1.json`
+- Scalar UI: `http://localhost:5051/scalar/v1`
 
 ## Example curl requests
 
 ```bash
-curl -H "X-API-KEY: dev-game-server-key" http://localhost:5026/api/server/status
+curl -H "X-API-KEY: dev-game-server-key" http://localhost:5051/api/server/status
 ```
 
 ```bash
-curl -H "X-API-KEY: dev-game-server-key" http://localhost:5026/api/players
+curl -H "X-API-KEY: dev-game-server-key" http://localhost:5051/api/players
 ```
 
 ```bash
-curl http://localhost:5026/scalar/v1
+curl http://localhost:5051/scalar/v1
 ```
