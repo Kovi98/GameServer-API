@@ -1,4 +1,4 @@
-using GameServer.Api.Middleware;
+using GameServer.Api.Authentication;
 using GameServer.Api.Options;
 using GameServer.Api.Services;
 using Scalar.AspNetCore;
@@ -22,6 +22,20 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton<IGameServerFakeDataService, GameServerFakeDataService>();
+builder.Services
+    .AddAuthentication(ApiKeyAuthenticationHandler.SchemeName)
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName,
+        static _ => { });
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(ApiKeyAuthenticationHandler.PolicyName, policy =>
+    {
+        policy.AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName);
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim(ApiKeyAuthenticationHandler.ApiKeyValidClaimType, bool.TrueString);
+    });
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -29,10 +43,12 @@ var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference();
 
-app.UseWhen(static context => context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase),
-    static appBuilder => appBuilder.UseMiddleware<ApiKeyMiddleware>());
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/api/server/status", (IGameServerFakeDataService fakeDataService) =>
+var api = app.MapGroup("/api").RequireAuthorization(ApiKeyAuthenticationHandler.PolicyName);
+
+api.MapGet("/server/status", (IGameServerFakeDataService fakeDataService) =>
 {
     var status = fakeDataService.GetServerStatus();
     return Results.Ok(status);
@@ -40,7 +56,7 @@ app.MapGet("/api/server/status", (IGameServerFakeDataService fakeDataService) =>
 .WithName("GetServerStatus")
 .WithSummary("Gets current fake game server status.");
 
-app.MapGet("/api/players", (IGameServerFakeDataService fakeDataService) =>
+api.MapGet("/players", (IGameServerFakeDataService fakeDataService) =>
 {
     var players = fakeDataService.GetPlayers();
     return Results.Ok(players);
