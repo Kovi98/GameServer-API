@@ -1,8 +1,9 @@
 using GameServer.Api.Authentication;
+using GameServer.Api.Dtos;
 using GameServer.Api.Options;
 using GameServer.Api.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,7 +47,7 @@ builder.Services.AddOpenApi(options =>
         document.Info.Description = "Fake game server endpoints secured by an API key passed in the X-API-KEY header.";
 
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
         document.Components.SecuritySchemes[ApiKeyAuthenticationHandler.SchemeName] = new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.ApiKey,
@@ -54,6 +55,16 @@ builder.Services.AddOpenApi(options =>
             Name = ApiKeyAuthenticationHandler.HeaderName,
             Description = "API key required for all /api endpoints."
         };
+        document.Security ??= [];
+        document.Security.Add(new OpenApiSecurityRequirement
+        {
+            [
+                new OpenApiSecuritySchemeReference(
+                    ApiKeyAuthenticationHandler.SchemeName,
+                    document,
+                    externalResource: null)
+            ] = []
+        });
 
         return Task.CompletedTask;
     });
@@ -81,28 +92,7 @@ api.MapGet("/server/status", Ok<ServerStatusDto> (IGameServerFakeDataService fak
 .WithDescription("Returns the current state of the fake game server including player counts, map, version and generation timestamp.")
 .Produces<ServerStatusDto>(StatusCodes.Status200OK)
 .Produces(StatusCodes.Status401Unauthorized)
-.Produces(StatusCodes.Status403Forbidden)
-.WithOpenApi(operation =>
-{
-    operation.Security =
-    [
-        new OpenApiSecurityRequirement
-        {
-            [
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = ApiKeyAuthenticationHandler.SchemeName
-                    }
-                }
-            ] = Array.Empty<string>()
-        }
-    ];
-
-    return operation;
-});
+.Produces(StatusCodes.Status403Forbidden);
 
 api.MapGet("/players", Ok<IReadOnlyList<PlayerDto>> (IGameServerFakeDataService fakeDataService) =>
 {
@@ -114,27 +104,6 @@ api.MapGet("/players", Ok<IReadOnlyList<PlayerDto>> (IGameServerFakeDataService 
 .WithDescription("Returns the list of configured players including their online state, ban state, level, ping and last activity.")
 .Produces<IReadOnlyList<PlayerDto>>(StatusCodes.Status200OK)
 .Produces(StatusCodes.Status401Unauthorized)
-.Produces(StatusCodes.Status403Forbidden)
-.WithOpenApi(operation =>
-{
-    operation.Security =
-    [
-        new OpenApiSecurityRequirement
-        {
-            [
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = ApiKeyAuthenticationHandler.SchemeName
-                    }
-                }
-            ] = Array.Empty<string>()
-        }
-    ];
-
-    return operation;
-});
+.Produces(StatusCodes.Status403Forbidden);
 
 app.Run();
